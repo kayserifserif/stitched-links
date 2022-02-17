@@ -1,0 +1,14 @@
+body {
+  margin: 0;
+}
+
+blockquote {
+  margin: 1em;
+  font-size: 64px;
+}
+
+blockquote a {
+  color: blue;
+  /* text-decoration: none; */
+  /* border-bottom: 2px solid currentcolor; */
+}
