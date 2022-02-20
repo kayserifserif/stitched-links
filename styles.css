@@ -1,14 +1,35 @@
+html {
+  height: 100%;
+  overflow: auto;
+}
+
 body {
   margin: 0;
+  height: 100%;
+  overflow: auto;
 }
 
-blockquote {
+#canvas {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+  min-height: 100%;
+  z-index: -1;
+}
+
+.quote {
   margin: 1em;
   font-size: 64px;
+  opacity: 0;
+  transition: 1s opacity ease-in-out;
 }
 
-blockquote a {
+.quote a {
   color: blue;
-  /* text-decoration: none; */
-  /* border-bottom: 2px solid currentcolor; */
+  text-decoration: none;
+}
+
+.show {
+  opacity: 1;
 }
