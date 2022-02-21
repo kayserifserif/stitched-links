@@ -6,7 +6,7 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
 const underlineVariation = 15;
-const connectionVariation = 5;
+const connectionVariation = 7;
 
 let pct = 0.0;
 let subdivision;
@@ -16,69 +16,35 @@ let underlines = [];
 let connections = [];
 let points = [];
 
+let DEBUG = true;
+
 document.addEventListener("DOMContentLoaded", () => {
   resizeCanvas();
 
   window.addEventListener("resize", resizeCanvas);
 
-  // subdivision = 1.0 / (links.length + 1);
   subdivision = 1.0 / (links.length * 2 - 1);
 
   for (let i = 0; i < links.length; i++) {
     links[i].addEventListener("click", nextQuote);
-    if (i < links.length - 1) {
+    // if (i < links.length - 1) {
       makePoints(i);
-    }
+    // }
   }
 
   draw();
 });
 
 function makePoints(i) {
-  let rect = links[i].getBoundingClientRect();
-
   // underline
-  let underline = [];
-  underline.push({
-    x: 0,
-    y: rect.height
-  });
-  underline.push({
-    x: Math.random() * rect.width,
-    y: rect.height + (Math.random() - 0.5) * underlineVariation
-  });
-  underline.push({
-    x: underline[1].x + Math.random() * (rect.width - underline[1].x),
-    y: rect.height + (Math.random() - 0.5) * underlineVariation
-  });
-  underline.push({
-    x: rect.width,
-    y: rect.height
-  });
+  let rect = links[i].getBoundingClientRect();
+  let underline = makeUnderline(rect);
   underlines.push(underline);
 
-  // connection
   if (i < links.length - 1) {
-    let nextRect = links[i + 1].getBoundingClientRect();
-
     // next underline
-    let nextUnderline = [];
-    nextUnderline.push({
-      x: 0,
-      y: nextRect.height
-    });
-    nextUnderline.push({
-      x: Math.random() * rect.width,
-      y: nextRect.height + (Math.random() - 0.5) * underlineVariation
-    });
-    nextUnderline.push({
-      x: nextUnderline[1].x + Math.random() * (nextRect.width - nextUnderline[1].x),
-      y: nextRect.height + (Math.random() - 0.5) * underlineVariation
-    });
-    nextUnderline.push({
-      x: nextRect.width,
-      y: nextRect.height
-    });
+    let nextRect = links[i + 1].getBoundingClientRect();
+    let nextUnderline = makeUnderline(nextRect);
     underlines.push(nextUnderline);
     
     // connection
@@ -93,6 +59,27 @@ function makePoints(i) {
     });
     connections.push(connection);
   }
+}
+
+function makeUnderline(rect) {
+  let underline = [];
+  underline.push({
+    x: 0,
+    y: rect.height
+  });
+  underline.push({
+    x: (Math.random() * 0.5) * rect.width,
+    y: rect.height + (Math.random() - 0.5) * underlineVariation
+  });
+  underline.push({
+    x: underline[1].x + Math.random() * (rect.width - underline[1].x),
+    y: rect.height + (Math.random() - 0.5) * underlineVariation
+  });
+  underline.push({
+    x: rect.width,
+    y: rect.height
+  });
+  return underline;
 }
 
 function resizeCanvas() {
@@ -133,18 +120,23 @@ function draw() {
   let startUnderline = getUnderline(0);
   ctx.moveTo(startUnderline[0].x, startUnderline[0].y);
   animateBezier(0, startUnderline);
+  ctx.stroke();
 
   for (let i = 0; i < quoteIndex; i++) {
     // connecting line
     let connection = getConnection(i, i + 1);
+    ctx.beginPath();
     animateBezier((i * 2) + 1, connection);
+    ctx.stroke();
 
     // draw next underline
     let endUnderline = getUnderline(i + 1);
+    ctx.beginPath();
     animateBezier((i * 2) + 2, endUnderline);
+    ctx.stroke();
   }
 
-  ctx.stroke();
+  // ctx.stroke();
 
   requestAnimationFrame(draw);
 }
@@ -158,6 +150,15 @@ function getUnderline(index) {
       y: rect.y + underlines[index][point].y
     });
   }
+
+  if (DEBUG) {
+    for (let point = 0; point < 4; point++) {
+      ctx.beginPath();
+      ctx.ellipse(underline[point].x, underline[point].y, 5, 5, 0, 0, 2 * Math.PI);
+      ctx.stroke();
+    }
+  }
+
   return underline;
 }
 
@@ -186,6 +187,13 @@ function getConnection(startIndex, endIndex) {
     },
     endPoint
   ];
+
+  if (DEBUG) {
+    ctx.beginPath();
+    ctx.ellipse(connection[1].x, connection[1].y, 5, 5, 0, 0, 2 * Math.PI);
+    ctx.ellipse(connection[2].x, connection[2].y, 5, 5, 0, 0, 2 * Math.PI);
+    ctx.stroke();
+  }
 
   return connection;
 }
