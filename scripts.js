@@ -96,10 +96,10 @@ function makePoints(i) {
 }
 
 function resizeCanvas() {
-  canvas.setAttribute("width", window.outerWidth * 2);
-  canvas.setAttribute("height", window.outerHeight * 2);
-  canvas.style.width = window.outerWidth + "px";
-  canvas.style.height = window.outerHeight + "px";
+  canvas.setAttribute("width", window.innerWidth * 2);
+  canvas.setAttribute("height", window.innerHeight * 2);
+  canvas.style.width = window.innerWidth + "px";
+  canvas.style.height = window.innerHeight + "px";
   ctx.scale(2, 2);
 }
 
