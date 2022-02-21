@@ -9,7 +9,8 @@ const underlineVariation = 15;
 const connectionVariation = 5;
 
 let pct = 0.0;
-// let pct = 1.0;
+let subdivision;
+const inc = 0.005;
 
 let underlines = [];
 let connections = [];
@@ -19,6 +20,8 @@ document.addEventListener("DOMContentLoaded", () => {
   resizeCanvas();
 
   window.addEventListener("resize", resizeCanvas);
+
+  subdivision = 1.0 / (links.length + 1);
 
   for (let i = 0; i < links.length; i++) {
     links[i].addEventListener("click", nextQuote);
@@ -92,8 +95,11 @@ function makePoints(i) {
 }
 
 function resizeCanvas() {
-  canvas.setAttribute("width", window.outerWidth);
-  canvas.setAttribute("height", window.outerHeight);
+  canvas.setAttribute("width", window.outerWidth * 2);
+  canvas.setAttribute("height", window.outerHeight * 2);
+  canvas.style.width = window.outerWidth + "px";
+  canvas.style.height = window.outerHeight + "px";
+  ctx.scale(2, 2);
 }
 
 function nextQuote(event) {
@@ -113,112 +119,99 @@ function nextQuote(event) {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  let bodyRect = document.body.getBoundingClientRect();
-  let startRect = links[0].getBoundingClientRect();
-  let start = {
-    x: startRect.x - bodyRect.x,
-    y: startRect.y - bodyRect.y
-  };
-  let startUnderline = [
-    {
-      x: start.x + underlines[0][0].x,
-      y: start.y + underlines[0][0].y
-    },
-    {
-      x: start.x + underlines[0][1].x,
-      y: start.y + underlines[0][1].y
-    },
-    {
-      x: start.x + underlines[0][2].x,
-      y: start.y + underlines[0][2].y
-    },
-    {
-      x: start.x + underlines[0][3].x,
-      y: start.y + underlines[0][3].y
-    }
-  ];
+  let start = links[0].getBoundingClientRect();
+  let startUnderline = [];
+  for (let i = 0; i < 4; i++) {
+    startUnderline.push({
+      x: start.x + underlines[0][i].x,
+      y: start.y + underlines[0][i].y
+    });
+  }
 
   ctx.strokeStyle = "rgb(0, 0, 255)";
   ctx.lineWidth = 2;
-  // ctx.beginPath();
+  ctx.beginPath();
 
   // draw first underline
-  ctx.beginPath();
-  ctx.moveTo(startUnderline[0].x, startUnderline[0].y);
-  ctx.bezierCurveTo(
-    startUnderline[1].x, startUnderline[1].y,
-    startUnderline[2].x, startUnderline[2].y,
-    startUnderline[3].x, startUnderline[3].y
+  ctx.moveTo(
+    startUnderline[0].x,
+    startUnderline[0].y
   );
-  // let point = threeOrderBezier(
-  //   pct,
-  //   [startUnderline[0].x, startUnderline[0].y],
-  //   [startUnderline[1].x, startUnderline[1].y],
-  //   [startUnderline[2].x, startUnderline[2].y],
-  //   [startUnderline[3].x, startUnderline[3].y]
-  // );
-  // if (pct <= 0.99) {
-  //   points.push(point);
-  //   pct += 0.01;
-  // }
-  // for (let i = 0; i < points.length; i++) {
-  //   ctx.lineTo(points[i][0], points[i][1]);
-  // }
-  // ctx.stroke();
+  for (let i = 0.0; i <= pct; i += inc) {
+    let t = Math.min((i / subdivision), 1.0);
+    let point = threeOrderBezier(
+      t,
+      startUnderline[0],
+      startUnderline[1],
+      startUnderline[2],
+      startUnderline[3]
+    );
+    ctx.lineTo(
+      point.x,
+      point.y
+    );
+  }
+  if (pct <= subdivision) {
+    pct += inc;
+  }
 
-  // ctx.beginPath();
   for (let i = 0; i < quoteIndex; i++) {
     let nextLink = links[quoteIndex];
 
-    let endRect = nextLink.getBoundingClientRect();
-    let end = {
-      x: endRect.x - bodyRect.x,
-      y: endRect.y - bodyRect.y
-    };
-    let endUnderline = [
-      {
-        x: end.x + underlines[i + 1][0].x,
-        y: end.y + underlines[i + 1][0].y
-      },
-      {
-        x: end.x + underlines[i + 1][1].x,
-        y: end.y + underlines[i + 1][1].y
-      },
-      {
-        x: end.x + underlines[i + 1][2].x,
-        y: end.y + underlines[i + 1][2].y
-      },
-      {
-        x: end.x + underlines[i + 1][3].x,
-        y: end.y + underlines[i + 1][3].y
-      }
-    ];
-
-    // midpoint
-    let midpoint = {
-      x: startUnderline[3].x + (endUnderline[0].x - startUnderline[3].x) * 0.5,
-      y: startUnderline[3].y + (endUnderline[0].y - startUnderline[3].y) * 0.5
+    let end = nextLink.getBoundingClientRect();
+    let endUnderline = [];
+    for (let j = 0; j < 4; j++) {
+      endUnderline.push({
+        x: end.x + underlines[i + 1][j].x,
+        y: end.y + underlines[i + 1][j].y
+      });
     }
 
-    // first connecting line
-    ctx.bezierCurveTo(
-      startUnderline[3].x + connections[i][0].x, startUnderline[3].y + connections[i][0].y,
-      endUnderline[0].x - connections[i][1].x, endUnderline[0].y - connections[i][1].y,
-      endUnderline[0].x, endUnderline[0].y
-    );
+    // connecting line
+    for (let j = (i + 1) * subdivision; j <= pct; j += inc) {
+      let t = Math.min(((j - (i + 1) * subdivision) / subdivision), 1.0);
+      let point = threeOrderBezier(
+        t,
+        startUnderline[3],
+        {
+          x: startUnderline[3].x + connections[i][0].x,
+          y: startUnderline[3].y + connections[i][0].y
+        },
+        {
+          x: endUnderline[0].x - connections[i][1].x,
+          y: endUnderline[0].y - connections[i][1].y
+        },
+        endUnderline[0]
+      );
+      ctx.lineTo(
+        point.x,
+        point.y
+      );
+    }
 
-    // second connecting line
+    if (pct <= (i + 2) * subdivision) {
+      pct += inc;
+    }
 
     // draw next underline
-    ctx.bezierCurveTo(
-      endUnderline[1].x, endUnderline[1].y,
-      endUnderline[2].x, endUnderline[2].y,
-      endUnderline[3].x, endUnderline[3].y
-    );
+    for (let j = (i + 2) * subdivision; j <= pct; j += inc) {
+      let t = Math.min(((j - (i + 2) * subdivision) / subdivision), 1.0);
+      let point = threeOrderBezier(
+        t,
+        endUnderline[0],
+        endUnderline[1],
+        endUnderline[2],
+        endUnderline[3]
+      );
+      ctx.lineTo(
+        point.x,
+        point.y
+      );
+    }
 
-    // if (pct <= 0.99) {
-    //   pct += 0.01;
-    // }
+    if (pct <= (i + 3) * subdivision) {
+      pct += inc;
+    }
   }
 
   ctx.stroke();
@@ -226,12 +219,17 @@ function draw() {
   requestAnimationFrame(draw);
 }
 
+// https://blog.katastros.com/a?ID=01750-8f9684a6-b537-43f2-9f6a-699632760434
 function threeOrderBezier(t, p1, cp1, cp2, p2) {
 	//The parameters are t, start point, two control points and end point
-	var [x1, y1] = p1,
-		[cx1, cy1] = cp1,
-		[cx2, cy2] = cp2,
-		[x2, y2] = p2;
+	// var [x1, y1] = p1,
+	// 	[cx1, cy1] = cp1,
+	// 	[cx2, cy2] = cp2,
+	// 	[x2, y2] = p2;
+  var {x: x1, y: y1} = p1,
+    {x: cx1, y: cy1} = cp1,
+    {x: cx2, y: cy2} = cp2,
+    {x: x2, y: y2} = p2;
 	var x =
 		x1 * (1-t) * (1-t) * (1-t) +
 		3 * cx1 * t * (1-t) * (1-t) +
@@ -242,5 +240,6 @@ function threeOrderBezier(t, p1, cp1, cp2, p2) {
 		3 * cy1 * t * (1-t) * (1-t) +
 		3 * cy2 * t * t * (1-t) +
 		y2 * t * t * t;
-	return [x, y];
+	// return [x, y];
+  return {x: x, y: y};
 }
