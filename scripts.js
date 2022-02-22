@@ -24,9 +24,14 @@ const INCREMENT = 0.005;
 let underlines = [];
 let connections = [];
 
+// debug
 const debugBtn = document.getElementById("debug");
 // show control points and lines of the bezier curves
 let debug = false;
+
+// pull thread taut
+const pullTautBtn = document.getElementById("pullTaut");
+let taut = false;
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -40,6 +45,9 @@ document.addEventListener("DOMContentLoaded", () => {
   debugBtn.checked = debug;
   debugBtn.addEventListener("click", onDebugClick);
 
+  // pull thread taut
+  pullTautBtn.addEventListener("click", pullTaut);
+
   // calculate subdivisions for timing
   subdivision = 1.0 / (links.length * 2 - 1);
 
@@ -49,6 +57,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function onDebugClick() {
   debug = debugBtn.checked;
+}
+
+function pullTaut() {
+  taut = true;
+  create();
 }
 
 function create() {
@@ -87,18 +100,29 @@ function makeUnderline(rect) {
     x: 0,
     y: rect.height
   });
-  underline.push({
-    // somewhere in the first half of the underline
-    x: (Math.random() * 0.25 + 0.25) * rect.width,
-    // some random amount above or below the underline
-    y: rect.height + (Math.random() * 2 - 1) * UNDERLINE_VARIATION
-  });
-  underline.push({
-    // somewhere in the second half of the underline
-    x: (Math.random() * 0.25 + 0.5) * rect.width,
-    // some random amount above or below the underline
-    y: rect.height + (Math.random() * 2 - 1) * UNDERLINE_VARIATION
-  });
+  if (taut) {
+    underline.push({
+      x: 0.25,
+      y: rect.height
+    });
+    underline.push({
+      x: 0.75,
+      y: rect.height
+    });
+  } else {
+    underline.push({
+      // somewhere in the first half of the underline
+      x: (Math.random() * 0.25 + 0.25) * rect.width,
+      // some random amount above or below the underline
+      y: rect.height + (Math.random() * 2 - 1) * UNDERLINE_VARIATION
+    });
+    underline.push({
+      // somewhere in the second half of the underline
+      x: (Math.random() * 0.25 + 0.5) * rect.width,
+      // some random amount above or below the underline
+      y: rect.height + (Math.random() * 2 - 1) * UNDERLINE_VARIATION
+    });
+  }
   underline.push({
     x: rect.width,
     y: rect.height
@@ -110,16 +134,22 @@ function makeUnderline(rect) {
 function makeConnection(startUnderline, endUnderline) {
   let connection = [];
 
-  // extends out from the last two points of the previous underline
-  connection.push({
-    x: (startUnderline[3].x - startUnderline[2].x) * CONNECTION_SIZE,
-    y: (startUnderline[3].y - startUnderline[2].y) * CONNECTION_SIZE
-  });
-  // continues into the first two points of the next underline
-  connection.push({
-    x: (endUnderline[0].x - endUnderline[1].x) * CONNECTION_SIZE,
-    y: (endUnderline[0].y - endUnderline[1].y) * CONNECTION_SIZE
-  });
+  if (taut) {
+    connection.push({x: 0, y: 0});
+    connection.push({x: 0, y: 0});
+    console.log(connection)
+  } else {
+    // extends out from the last two points of the previous underline
+    connection.push({
+      x: (startUnderline[3].x - startUnderline[2].x) * CONNECTION_SIZE,
+      y: (startUnderline[3].y - startUnderline[2].y) * CONNECTION_SIZE
+    });
+    // continues into the first two points of the next underline
+    connection.push({
+      x: (endUnderline[0].x - endUnderline[1].x) * CONNECTION_SIZE,
+      y: (endUnderline[0].y - endUnderline[1].y) * CONNECTION_SIZE
+    });
+  }
 
   return connection;
 }

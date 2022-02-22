@@ -38,3 +38,8 @@ body {
 .show {
   opacity: 1;
 }
+
+#pullTaut {
+  display: block;
+  margin: 8em auto;
+}
