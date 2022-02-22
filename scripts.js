@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
   debugBtn.checked = debug;
   debugBtn.addEventListener("click", onDebugClick);
 
-  // pull thread taut
+  // buttons
   pullTautBtn.addEventListener("click", pullTaut);
   makeOpaqueBtn.addEventListener("click", makeOpaque);
 
