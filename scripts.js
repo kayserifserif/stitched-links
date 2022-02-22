@@ -117,12 +117,11 @@ function nextQuote(event) {
   event.target.removeEventListener("click", nextQuote);
   event.target.addEventListener("click", e => e.preventDefault());
 
-  // let quoteRect = quotes[quoteIndex].getBoundingClientRect();
-  // let bottom = quoteRect.y + quoteRect.height;
-  // document.body.scrollTo({
-  //   top: window.innerHeight,
-  //   behavior: "smooth"
-  // });
+  let linkRect = links[quoteIndex - 1].getBoundingClientRect();
+  document.body.scrollTo({
+    top: linkRect.y,
+    behavior: "smooth"
+  });
 }
 
 function draw() {
