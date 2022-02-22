@@ -132,16 +132,9 @@ function nextQuote(event) {
   event.preventDefault();
 
   // show the next quote
-  if (quoteIndex < quotes.length - 1) {
-    quoteIndex++;
-    quotes[quoteIndex].classList.add("show");
-  }
-
-  // prevent the link from being clicked again
-  event.target.removeEventListener("click", nextQuote);
-  event.target.addEventListener("click", e => e.preventDefault());
-
+  quoteIndex++;
   if (quoteIndex < quotes.length) {
+    quotes[quoteIndex].classList.add("show");
     // scroll down to the link that was just clicked
     let linkRect = links[quoteIndex - 1].getBoundingClientRect();
     document.body.scrollTo({
@@ -149,6 +142,10 @@ function nextQuote(event) {
       behavior: "smooth"
     });
   }
+
+  // prevent the link from being clicked again
+  event.target.removeEventListener("click", nextQuote);
+  event.target.addEventListener("click", e => e.preventDefault());
 }
 
 function draw() {
@@ -165,19 +162,21 @@ function draw() {
   ctx.stroke();
 
   for (let i = 0; i < quoteIndex; i++) {
-    // draw connecting line
-    let connection = getConnection(i, i + 1);
-    ctx.beginPath();
-    ctx.strokeStyle = "rgb(0, 0, 255)";
-    animateBezier((i * 2) + 1, connection);
-    ctx.stroke();
+    if (i < quotes.length - 1) {
+      // draw connecting line
+      let connection = getConnection(i, i + 1);
+      ctx.beginPath();
+      ctx.strokeStyle = "rgb(0, 0, 255)";
+      animateBezier((i * 2) + 1, connection);
+      ctx.stroke();
 
-    // draw next underline
-    let endUnderline = getUnderline(i + 1);
-    ctx.beginPath();
-    ctx.strokeStyle = "rgb(0, 0, 255)";
-    animateBezier((i * 2) + 2, endUnderline);
-    ctx.stroke();
+      // draw next underline
+      let endUnderline = getUnderline(i + 1);
+      ctx.beginPath();
+      ctx.strokeStyle = "rgb(0, 0, 255)";
+      animateBezier((i * 2) + 2, endUnderline);
+      ctx.stroke();
+    }
   }
 
   // go again!
