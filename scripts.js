@@ -29,9 +29,11 @@ const debugBtn = document.getElementById("debug");
 // show control points and lines of the bezier curves
 let debug = false;
 
-// pull thread taut
+// buttons
 const pullTautBtn = document.getElementById("pullTaut");
 let taut = false;
+const makeOpaqueBtn = document.getElementById("makeOpaque");
+let opaque = false;
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -47,6 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // pull thread taut
   pullTautBtn.addEventListener("click", pullTaut);
+  makeOpaqueBtn.addEventListener("click", makeOpaque);
 
   // calculate subdivisions for timing
   subdivision = 1.0 / (links.length * 2 - 1);
@@ -61,6 +64,11 @@ function onDebugClick() {
 
 function pullTaut() {
   taut = true;
+  create();
+}
+
+function makeOpaque() {
+  opaque = true;
   create();
 }
 
@@ -218,7 +226,11 @@ function draw() {
       // draw connecting line
       let connection = getConnection(i, i + 1);
       ctx.beginPath();
-      ctx.strokeStyle = "rgba(0, 0, 255, 0.3)";
+      if (opaque) {
+        ctx.strokeStyle = "rgba(0, 0, 255, 0)";
+      } else {
+        ctx.strokeStyle = "rgba(0, 0, 255, 0.3)";
+      }
       animateBezier((i * 2) + 1, connection);
       ctx.stroke();
 
