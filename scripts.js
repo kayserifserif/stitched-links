@@ -5,42 +5,57 @@ let quoteIndex = 0;
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
+// media query
+const BREAKPOINT = 800;
+let windowWidth;
+
 // how much variation is in the curve of the underline
-const underlineVariation = 15;
+const UNDERLINE_VARIATION = 15;
 // how big the arc of the connection is
-const connectionSize = 8;
+const CONNECTION_SIZE = 8;
 
 // keeps track of where we are in the animation
 let pct = 0.0;
 // keeps track of what point each section should animate to
 let subdivision;
 // speed of the animation
-const inc = 0.005;
+const INCREMENT = 0.005;
 
 let underlines = [];
 let connections = [];
 
 const debugBtn = document.getElementById("debug");
 // show control points and lines of the bezier curves
-let DEBUG = false;
+let debug = false;
 
 document.addEventListener("DOMContentLoaded", () => {
 
   // resize canvas and add listener to resize again
   // any time the window size changes
+  windowWidth = window.innerWidth;
   resizeCanvas();
   window.addEventListener("resize", resizeCanvas);
 
   // for debugging the bezier curves
-  debugBtn.checked = DEBUG;
-  debugBtn.addEventListener("click", () => {
-    DEBUG = debugBtn.checked;
-  });
+  debugBtn.checked = debug;
+  debugBtn.addEventListener("click", onDebugClick);
 
   // calculate subdivisions for timing
   subdivision = 1.0 / (links.length * 2 - 1);
 
-  // ake points for the first underline
+  create();
+  draw();
+});
+
+function onDebugClick() {
+  debug = debugBtn.checked;
+}
+
+function create() {
+  underlines = [];
+  connections = [];
+
+  // make points for the first underline
   let rect = links[0].getBoundingClientRect();
   let underline = makeUnderline(rect);
   underlines.push(underline);
@@ -49,24 +64,19 @@ document.addEventListener("DOMContentLoaded", () => {
   for (let i = 0; i < links.length; i++) {
     links[i].addEventListener("click", nextQuote);
     if (i < links.length - 1) {
-      makePoints(i);
+      // current underline
+      let underline = underlines[i];
+
+      // next underline
+      let nextRect = links[i + 1].getBoundingClientRect();
+      let nextUnderline = makeUnderline(nextRect);
+      underlines.push(nextUnderline);
+      
+      // connection
+      let connection = makeConnection(underline, nextUnderline);
+      connections.push(connection);
     }
   }
-
-  draw();
-});
-
-function makePoints(i) {
-  let underline = underlines[i];
-
-  // next underline
-  let nextRect = links[i + 1].getBoundingClientRect();
-  let nextUnderline = makeUnderline(nextRect);
-  underlines.push(nextUnderline);
-  
-  // connection
-  let connection = makeConnection(underline, nextUnderline);
-  connections.push(connection);
 }
 
 function makeUnderline(rect) {
@@ -81,13 +91,13 @@ function makeUnderline(rect) {
     // somewhere in the first half of the underline
     x: (Math.random() * 0.25 + 0.25) * rect.width,
     // some random amount above or below the underline
-    y: rect.height + (Math.random() * 2 - 1) * underlineVariation
+    y: rect.height + (Math.random() * 2 - 1) * UNDERLINE_VARIATION
   });
   underline.push({
     // somewhere in the second half of the underline
     x: (Math.random() * 0.25 + 0.5) * rect.width,
     // some random amount above or below the underline
-    y: rect.height + (Math.random() * 2 - 1) * underlineVariation
+    y: rect.height + (Math.random() * 2 - 1) * UNDERLINE_VARIATION
   });
   underline.push({
     x: rect.width,
@@ -102,13 +112,13 @@ function makeConnection(startUnderline, endUnderline) {
 
   // extends out from the last two points of the previous underline
   connection.push({
-    x: (startUnderline[3].x - startUnderline[2].x) * connectionSize,
-    y: (startUnderline[3].y - startUnderline[2].y) * connectionSize
+    x: (startUnderline[3].x - startUnderline[2].x) * CONNECTION_SIZE,
+    y: (startUnderline[3].y - startUnderline[2].y) * CONNECTION_SIZE
   });
   // continues into the first two points of the next underline
   connection.push({
-    x: (endUnderline[0].x - endUnderline[1].x) * connectionSize,
-    y: (endUnderline[0].y - endUnderline[1].y) * connectionSize
+    x: (endUnderline[0].x - endUnderline[1].x) * CONNECTION_SIZE,
+    y: (endUnderline[0].y - endUnderline[1].y) * CONNECTION_SIZE
   });
 
   return connection;
@@ -119,13 +129,23 @@ function resizeCanvas() {
   // accounting for retina displays
   let scale = window.devicePixelRatio;
 
+  // set css style so it fits the window
   canvas.style.width = window.innerWidth + "px";
   canvas.style.height = window.innerHeight + "px";
 
+  // but calculate pixels as if it were bigger than the window
   canvas.width = Math.floor(window.innerWidth * scale);
   canvas.height = Math.floor(window.innerHeight * scale);
 
+  // then scale everything up
   ctx.scale(scale, scale);
+
+  // observe media query and recreate points at brekapoint
+  if (windowWidth >= BREAKPOINT && window.innerWidth < BREAKPOINT ||
+      windowWidth < BREAKPOINT && window.innerWidth >= BREAKPOINT) {
+    create();
+  }
+  windowWidth = window.innerWidth;
 }
 
 function nextQuote(event) {
@@ -193,7 +213,7 @@ function getUnderline(index) {
     });
   }
 
-  if (DEBUG) {
+  if (debug) {
     // show the points and lines of the curve
     ctx.beginPath();
     ctx.strokeStyle = "rgb(255, 0, 0)";
@@ -237,7 +257,7 @@ function getConnection(startIndex, endIndex) {
     endPoint
   ];
 
-  if (DEBUG) {
+  if (debug) {
     // show the points and lines of the curve
     ctx.beginPath();
     ctx.strokeStyle = "rgb(255, 0, 0)";
@@ -255,7 +275,7 @@ function getConnection(startIndex, endIndex) {
 
 function animateBezier(section, bezierPath) {
   // animate until this section is done
-  for (let i = section * subdivision; i <= pct; i += inc) {
+  for (let i = section * subdivision; i <= pct; i += INCREMENT) {
     // how much to animate in this frame
     let t = Math.min(((i - section * subdivision) / subdivision), 1.0);
     let point = threeOrderBezier(
@@ -273,7 +293,7 @@ function animateBezier(section, bezierPath) {
 
   // only increment if we're still on this section
   if (pct <= (section + 1) * subdivision) {
-    pct += inc;
+    pct += INCREMENT;
   }
 }
 
