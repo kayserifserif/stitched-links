@@ -5,38 +5,47 @@ let quoteIndex = 0;
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
+// how much variation is in the curve of the underline
 const underlineVariation = 15;
-const connectionVariation = 8;
+// how big the arc of the connection is
+const connectionSize = 8;
 
+// keeps track of where we are in the animation
 let pct = 0.0;
+// keeps track of what point each section should animate to
 let subdivision;
+// speed of the animation
 const inc = 0.005;
 
 let underlines = [];
 let connections = [];
-let points = [];
 
 const debugBtn = document.getElementById("debug");
-let DEBUG;
+// show control points and lines of the bezier curves
+let DEBUG = false;
 
 document.addEventListener("DOMContentLoaded", () => {
-  resizeCanvas();
 
+  // resize canvas and add listener to resize again
+  // any time the window size changes
+  resizeCanvas();
   window.addEventListener("resize", resizeCanvas);
 
-  debugBtn.checked = false;
-  DEBUG = debugBtn.checked;
+  // for debugging the bezier curves
+  debugBtn.checked = DEBUG;
   debugBtn.addEventListener("click", () => {
     DEBUG = debugBtn.checked;
   });
 
+  // calculate subdivisions for timing
   subdivision = 1.0 / (links.length * 2 - 1);
 
-  // first underline
+  // ake points for the first underline
   let rect = links[0].getBoundingClientRect();
   let underline = makeUnderline(rect);
   underlines.push(underline);
 
+  // make points for all other underlines and connections
   for (let i = 0; i < links.length; i++) {
     links[i].addEventListener("click", nextQuote);
     if (i < links.length - 1) {
@@ -62,39 +71,52 @@ function makePoints(i) {
 
 function makeUnderline(rect) {
   let underline = [];
+
+  // everything relative to the top left x and y coords
   underline.push({
     x: 0,
     y: rect.height
   });
   underline.push({
+    // somewhere in the first half of the underline
     x: (Math.random() * 0.25 + 0.25) * rect.width,
-    y: rect.height + (Math.random() - 0.5) * underlineVariation
+    // some random amount above or below the underline
+    y: rect.height + (Math.random() * 2 - 1) * underlineVariation
   });
   underline.push({
+    // somewhere in the second half of the underline
     x: (Math.random() * 0.25 + 0.5) * rect.width,
-    y: rect.height + (Math.random() - 0.5) * underlineVariation
+    // some random amount above or below the underline
+    y: rect.height + (Math.random() * 2 - 1) * underlineVariation
   });
   underline.push({
     x: rect.width,
     y: rect.height
   });
+
   return underline;
 }
 
 function makeConnection(startUnderline, endUnderline) {
   let connection = [];
+
+  // extends out from the last two points of the previous underline
   connection.push({
-    x: (startUnderline[3].x - startUnderline[2].x) * connectionVariation,
-    y: (startUnderline[3].y - startUnderline[2].y) * connectionVariation
+    x: (startUnderline[3].x - startUnderline[2].x) * connectionSize,
+    y: (startUnderline[3].y - startUnderline[2].y) * connectionSize
   });
+  // continues into the first two points of the next underline
   connection.push({
-    x: (endUnderline[0].x - endUnderline[1].x) * connectionVariation,
-    y: (endUnderline[0].y - endUnderline[1].y) * connectionVariation
+    x: (endUnderline[0].x - endUnderline[1].x) * connectionSize,
+    y: (endUnderline[0].y - endUnderline[1].y) * connectionSize
   });
+
   return connection;
 }
 
 function resizeCanvas() {
+  // resize according to device pixel ratio
+  // accounting for retina displays
   let scale = window.devicePixelRatio;
 
   canvas.style.width = window.innerWidth + "px";
@@ -109,25 +131,29 @@ function resizeCanvas() {
 function nextQuote(event) {
   event.preventDefault();
 
+  // show the next quote
   if (quoteIndex < quotes.length - 1) {
     quoteIndex++;
     quotes[quoteIndex].classList.add("show");
   }
 
+  // prevent the link from being clicked again
   event.target.removeEventListener("click", nextQuote);
   event.target.addEventListener("click", e => e.preventDefault());
 
-  let linkRect = links[quoteIndex - 1].getBoundingClientRect();
-  document.body.scrollTo({
-    top: linkRect.y,
-    behavior: "smooth"
-  });
+  if (quoteIndex < quotes.length) {
+    // scroll down to the link that was just clicked
+    let linkRect = links[quoteIndex - 1].getBoundingClientRect();
+    document.body.scrollTo({
+      top: linkRect.y,
+      behavior: "smooth"
+    });
+  }
 }
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  ctx.strokeStyle = "rgb(0, 0, 255)";
   ctx.lineWidth = 2;
 
   // draw first underline
@@ -139,7 +165,7 @@ function draw() {
   ctx.stroke();
 
   for (let i = 0; i < quoteIndex; i++) {
-    // connecting line
+    // draw connecting line
     let connection = getConnection(i, i + 1);
     ctx.beginPath();
     ctx.strokeStyle = "rgb(0, 0, 255)";
@@ -154,8 +180,7 @@ function draw() {
     ctx.stroke();
   }
 
-  // ctx.stroke();
-
+  // go again!
   requestAnimationFrame(draw);
 }
 
@@ -170,6 +195,7 @@ function getUnderline(index) {
   }
 
   if (DEBUG) {
+    // show the points and lines of the curve
     ctx.beginPath();
     ctx.strokeStyle = "rgb(255, 0, 0)";
     ctx.moveTo(underline[0].x, underline[0].y);
@@ -213,6 +239,7 @@ function getConnection(startIndex, endIndex) {
   ];
 
   if (DEBUG) {
+    // show the points and lines of the curve
     ctx.beginPath();
     ctx.strokeStyle = "rgb(255, 0, 0)";
     ctx.moveTo(connection[0].x, connection[0].y);
@@ -228,7 +255,9 @@ function getConnection(startIndex, endIndex) {
 }
 
 function animateBezier(section, bezierPath) {
+  // animate until this section is done
   for (let i = section * subdivision; i <= pct; i += inc) {
+    // how much to animate in this frame
     let t = Math.min(((i - section * subdivision) / subdivision), 1.0);
     let point = threeOrderBezier(
       t,
@@ -243,18 +272,15 @@ function animateBezier(section, bezierPath) {
     );
   }
 
+  // only increment if we're still on this section
   if (pct <= (section + 1) * subdivision) {
     pct += inc;
   }
 }
 
-// https://blog.katastros.com/a?ID=01750-8f9684a6-b537-43f2-9f6a-699632760434
+// code copied from https://blog.katastros.com/a?ID=01750-8f9684a6-b537-43f2-9f6a-699632760434
 function threeOrderBezier(t, p1, cp1, cp2, p2) {
 	//The parameters are t, start point, two control points and end point
-	// var [x1, y1] = p1,
-	// 	[cx1, cy1] = cp1,
-	// 	[cx2, cy2] = cp2,
-	// 	[x2, y2] = p2;
   var {x: x1, y: y1} = p1,
     {x: cx1, y: cy1} = cp1,
     {x: cx2, y: cy2} = cp2,
@@ -269,6 +295,5 @@ function threeOrderBezier(t, p1, cp1, cp2, p2) {
 		3 * cy1 * t * (1-t) * (1-t) +
 		3 * cy2 * t * t * (1-t) +
 		y2 * t * t * t;
-	// return [x, y];
   return {x: x, y: y};
 }
