@@ -95,11 +95,15 @@ function makeConnection(startUnderline, endUnderline) {
 }
 
 function resizeCanvas() {
-  canvas.setAttribute("width", window.innerWidth * 2);
-  canvas.setAttribute("height", window.innerHeight * 2);
+  let scale = window.devicePixelRatio;
+
   canvas.style.width = window.innerWidth + "px";
   canvas.style.height = window.innerHeight + "px";
-  ctx.scale(2, 2);
+
+  canvas.width = Math.floor(window.innerWidth * scale);
+  canvas.height = Math.floor(window.innerHeight * scale);
+
+  ctx.scale(scale, scale);
 }
 
 function nextQuote(event) {
