@@ -6,7 +6,7 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
 const underlineVariation = 15;
-const connectionVariation = 10;
+const connectionVariation = 8;
 
 let pct = 0.0;
 let subdivision;
