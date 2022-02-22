@@ -185,17 +185,19 @@ function nextQuote(event) {
   quoteIndex++;
   if (quoteIndex < quotes.length) {
     quotes[quoteIndex].classList.add("show");
-    // scroll down to the link that was just clicked
-    let linkRect = links[quoteIndex - 1].getBoundingClientRect();
-    document.body.scrollTo({
-      top: linkRect.y,
-      behavior: "smooth"
-    });
   }
+
+  // scroll down to the link that was just clicked
+  let linkRect = links[quoteIndex - 1].getBoundingClientRect();
+  document.body.scrollTo({
+    top: linkRect.y + document.body.scrollTop,
+    behavior: "smooth"
+  });
 
   // prevent the link from being clicked again
   event.target.removeEventListener("click", nextQuote);
   event.target.addEventListener("click", e => e.preventDefault());
+  event.target.classList.add("unlinked");
 }
 
 function draw() {
@@ -216,7 +218,7 @@ function draw() {
       // draw connecting line
       let connection = getConnection(i, i + 1);
       ctx.beginPath();
-      ctx.strokeStyle = "rgb(0, 0, 255)";
+      ctx.strokeStyle = "rgba(0, 0, 255, 0.3)";
       animateBezier((i * 2) + 1, connection);
       ctx.stroke();
 

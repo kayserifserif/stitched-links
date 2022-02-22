@@ -35,6 +35,10 @@ body {
   text-decoration: none;
 }
 
+.unlinked {
+  cursor: default;
+}
+
 .show {
   opacity: 1;
 }
