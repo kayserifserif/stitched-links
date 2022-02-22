@@ -14,14 +14,11 @@ body {
   position: absolute;
   top: 0;
   bottom: 0;
-  /* width: 100%; */
-  /* min-height: 100%; */
   z-index: -1;
 }
 
 .quote {
   margin: 1em;
-  /* font-size: 64px; */
   font-size: 32px;
   opacity: 0;
   transition: 1s opacity ease-in-out;
