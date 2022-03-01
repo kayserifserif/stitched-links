@@ -50,3 +50,9 @@ body {
   display: block;
   margin: 4rem auto;
 }
+
+#debugDiv {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+}
